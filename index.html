@@ -75,12 +75,6 @@
     .whatsapp-icon {
       width:16px;height:16px;fill:currentColor;
     }
-    
-    /* Hidden file input */
-    .hidden-file-input {
-      position:absolute;top:-9999px;opacity:0;pointer-events:none;
-    }
-    
     @media(max-width:640px){
       .tile { flex-direction:column;text-align:center }
       .tile-image { width:100%;height:200px;border:none }
@@ -109,14 +103,10 @@
     </div>
   </div>
 
-  <!-- Hidden file input for WhatsApp sharing -->
-  <input type="file" id="hiddenFileInput" class="hidden-file-input" accept="image/*">
-
   <script>
     const sizeFilter = document.getElementById('sizeFilter');
     const searchInput = document.getElementById('searchInput');
     const resultsContainer = document.getElementById('resultsContainer');
-    const hiddenFileInput = document.getElementById('hiddenFileInput');
     let tilesData = [];
     let isInitialLoad = true;
 
@@ -181,7 +171,7 @@
               <button class="download-btn" onclick="window.open('${downloadUrl}', '_blank')">
                 Download
               </button>
-              <button class="whatsapp-btn" onclick="shareToWhatsAppDirect('${tile.design_name}', '${directImageUrl}')">
+              <button class="whatsapp-btn" onclick="shareImageToWhatsApp('${tile.design_name}', '${directImageUrl}')">
                 ${whatsappIcon} WhatsApp
               </button>
             </div>
@@ -192,66 +182,59 @@
       isInitialLoad = false;
     }
 
-    async function shareToWhatsAppDirect(tileName, imageUrl) {
+    async function shareImageToWhatsApp(tileName, imageUrl) {
       try {
-        // Mobile detection
-        const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        // Image को download करके local blob बनाते हैं
+        const response = await fetch(imageUrl);
+        const blob = await response.blob();
         
-        if (isMobile) {
-          // Mobile के लिए direct WhatsApp app approach
-          const response = await fetch(imageUrl);
-          const blob = await response.blob();
+        // File object बनाते हैं बिना कोई text के
+        const file = new File([blob], `${tileName}.jpg`, { type: 'image/jpeg' });
+        
+        // Direct WhatsApp के लिए different approach
+        if (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+          // Mobile पर direct WhatsApp intent
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          const img = new Image();
           
-          // Create a data URL from the blob
-          const reader = new FileReader();
-          reader.onload = function() {
-            const dataUrl = reader.result;
+          img.onload = function() {
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
             
-            // For mobile - direct WhatsApp intent with base64 image
-            const whatsappUrl = `whatsapp://send?text=${encodeURIComponent(`data:image/jpeg;base64,${dataUrl.split(',')[1]}`)}`;
-            
-            // Try different WhatsApp approaches
-            const link = document.createElement('a');
-            link.href = whatsappUrl;
-            link.click();
-            
-            // Fallback - try to open WhatsApp web after delay
-            setTimeout(() => {
-              window.open('whatsapp://send', '_blank');
-            }, 1000);
-            
-            // Second fallback - WhatsApp web
-            setTimeout(() => {
-              window.open('https://wa.me/?text=' + encodeURIComponent(imageUrl), '_blank');
-            }, 2000);
+            canvas.toBlob(function(blob) {
+              const file = new File([blob], `${tileName}.jpg`, { type: 'image/jpeg' });
+              
+              if (navigator.share) {
+                navigator.share({
+                  files: [file]
+                });
+              } else {
+                // WhatsApp direct intent
+                window.open(`whatsapp://send`, '_blank');
+              }
+            }, 'image/jpeg', 0.9);
           };
-          reader.readAsDataURL(blob);
+          
+          img.crossOrigin = 'anonymous';
+          img.src = imageUrl;
           
         } else {
-          // Desktop approach - download and manual share
-          const response = await fetch(imageUrl);
-          const blob = await response.blob();
-          
-          // Download the image
+          // Desktop पर file download करके manual share
           const link = document.createElement('a');
           link.href = URL.createObjectURL(blob);
           link.download = `${tileName}.jpg`;
-          document.body.appendChild(link);
           link.click();
-          document.body.removeChild(link);
           
-          // Open WhatsApp web
+          // WhatsApp web खोलना
           setTimeout(() => {
             window.open('https://web.whatsapp.com/', '_blank');
           }, 500);
-          
-          // Show instruction
-          alert('Image downloaded! Now you can attach it in WhatsApp.');
         }
-        
       } catch (error) {
-        console.error('Error:', error);
-        // Ultimate fallback - just open the image
+        console.error('Error sharing:', error);
+        // Simple fallback - download image
         window.open(imageUrl, '_blank');
       }
     }
