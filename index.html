@@ -125,7 +125,7 @@
     function getDirectImageUrl(driveUrl) {
       if (!driveUrl || !driveUrl.includes('drive.google.com')) return driveUrl;
       const fileId = driveUrl.match(/[-\w]{25,}/);
-      return fileId ? `https://drive.google.com/uc?export=view&id=${fileId[0]}` : driveUrl;
+      return fileId ? `https://lh3.googleusercontent.com/d/${fileId[0]}=w1000` : driveUrl;
     }
 
     function populateSizeFilter() {
@@ -140,7 +140,6 @@
     }
 
     function displayTiles(tiles) {
-      // पहली load पर सिर्फ 5 tiles दिखाओ
       if (isInitialLoad && !searchInput.value.trim() && !sizeFilter.value) {
         tiles = tiles.slice(0, 5);
       }
@@ -172,7 +171,7 @@
               <button class="download-btn" onclick="window.open('${downloadUrl}', '_blank')">
                 Download
               </button>
-              <button class="whatsapp-btn" onclick="shareToWhatsApp('${tile.design_name}', '${directImageUrl}')">
+              <button class="whatsapp-btn" onclick="shareImageToWhatsApp('${tile.design_name}', '${directImageUrl}')">
                 ${whatsappIcon} WhatsApp
               </button>
             </div>
@@ -183,21 +182,42 @@
       isInitialLoad = false;
     }
 
-    function shareToWhatsApp(tileName, imageUrl) {
-      // WhatsApp के लिए message text बनाएं
-      const message = `Check out this tile: ${tileName}`;
-      const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message + '\n' + imageUrl)}`;
-      
-      // Mobile पर WhatsApp app खोलने के लिए
-      if (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-        window.open(`whatsapp://send?text=${encodeURIComponent(message + '\n' + imageUrl)}`, '_blank');
-        // Fallback के लिए web WhatsApp
-        setTimeout(() => {
-          window.open(whatsappUrl, '_blank');
-        }, 1000);
-      } else {
-        // Desktop पर web WhatsApp
-        window.open(whatsappUrl, '_blank');
+    async function shareImageToWhatsApp(tileName, imageUrl) {
+      try {
+        // Image को fetch करके blob बनाते हैं
+        const response = await fetch(imageUrl);
+        const blob = await response.blob();
+        
+        // File object बनाते हैं
+        const file = new File([blob], `${tileName}.jpg`, { type: 'image/jpeg' });
+        
+        // Web Share API check करते हैं
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            title: tileName,
+            text: `Check out this tile: ${tileName}`,
+            files: [file]
+          });
+        } else {
+          // Fallback: WhatsApp web/app में image URL के साथ
+          const message = `Check out this tile: ${tileName}`;
+          
+          if (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+            // Mobile पर WhatsApp app
+            window.open(`whatsapp://send?text=${encodeURIComponent(message)}&media=${encodeURIComponent(imageUrl)}`, '_blank');
+            setTimeout(() => {
+              window.open(`https://wa.me/?text=${encodeURIComponent(message + '\n' + imageUrl)}`, '_blank');
+            }, 1000);
+          } else {
+            // Desktop पर web WhatsApp
+            window.open(`https://wa.me/?text=${encodeURIComponent(message + '\n' + imageUrl)}`, '_blank');
+          }
+        }
+      } catch (error) {
+        console.error('Error sharing image:', error);
+        // Error की स्थिति में fallback
+        const message = `Check out this tile: ${tileName}`;
+        window.open(`https://wa.me/?text=${encodeURIComponent(message + '\n' + imageUrl)}`, '_blank');
       }
     }
 
@@ -211,12 +231,12 @@
         filtered = filtered.filter(tile => 
           tile.design_name.toLowerCase().includes(searchTerm)
         );
-        isInitialLoad = false; // search करने पर सारे results दिखाओ
+        isInitialLoad = false;
       }
       
       if (selectedSize) {
         filtered = filtered.filter(tile => tile.dimensions === selectedSize);
-        isInitialLoad = false; // filter करने पर सारे results दिखाओ
+        isInitialLoad = false;
       }
       
       displayTiles(filtered);
