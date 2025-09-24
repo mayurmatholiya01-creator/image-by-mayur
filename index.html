@@ -75,11 +75,6 @@
     .whatsapp-icon {
       width:16px;height:16px;fill:currentColor;
     }
-    #hiddenInput {
-      position: absolute;
-      left: -9999px;
-      opacity: 0;
-    }
     @media(max-width:640px){
       .tile { flex-direction:column;text-align:center }
       .tile-image { width:100%;height:200px;border:none }
@@ -107,15 +102,11 @@
       </div>
     </div>
   </div>
-  
-  <!-- Hidden file input for mobile sharing -->
-  <input type="file" id="hiddenInput" accept="image/*" />
 
   <script>
     const sizeFilter = document.getElementById('sizeFilter');
     const searchInput = document.getElementById('searchInput');
     const resultsContainer = document.getElementById('resultsContainer');
-    const hiddenInput = document.getElementById('hiddenInput');
     let tilesData = [];
     let isInitialLoad = true;
 
@@ -180,7 +171,7 @@
               <button class="download-btn" onclick="window.open('${downloadUrl}', '_blank')">
                 Download
               </button>
-              <button class="whatsapp-btn" onclick="shareToWhatsApp('${tile.design_name}', '${directImageUrl}')">
+              <button class="whatsapp-btn" onclick="shareImageToWhatsApp('${tile.design_name}', '${directImageUrl}')">
                 ${whatsappIcon} WhatsApp
               </button>
             </div>
@@ -191,73 +182,60 @@
       isInitialLoad = false;
     }
 
-    async function shareToWhatsApp(tileName, imageUrl) {
+    async function shareImageToWhatsApp(tileName, imageUrl) {
       try {
-        // Image को fetch करके blob में convert करते हैं
+        // Image को download करके local blob बनाते हैं
         const response = await fetch(imageUrl);
         const blob = await response.blob();
         
-        // File object create करते हैं
+        // File object बनाते हैं बिना कोई text के
         const file = new File([blob], `${tileName}.jpg`, { type: 'image/jpeg' });
         
-        // iOS/Android detection और direct WhatsApp opening
-        const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-        
-        if (/iPad|iPhone|iPod/.test(userAgent)) {
-          // iOS के लिए
-          try {
-            // WhatsApp URL scheme
-            window.location.href = 'whatsapp://';
+        // Direct WhatsApp के लिए different approach
+        if (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+          // Mobile पर direct WhatsApp intent
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          const img = new Image();
+          
+          img.onload = function() {
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
             
-            // File को clipboard में copy करने के लिए
-            if (navigator.share && navigator.canShare({ files: [file] })) {
-              await navigator.share({
-                files: [file]
-              });
-            } else {
-              // iOS में अगर share API नहीं है तो WhatsApp खोलते हैं
-              setTimeout(() => {
-                window.location.href = 'whatsapp://';
-              }, 100);
-            }
-          } catch (error) {
-            window.location.href = 'whatsapp://';
-          }
-        } 
-        else if (/android/i.test(userAgent)) {
-          // Android के लिए
-          try {
-            // WhatsApp direct intent
-            const intent = `intent://send#Intent;scheme=whatsapp;package=com.whatsapp;type=image/jpeg;action=android.intent.action.SEND;end`;
-            window.location.href = intent;
-            
-            // File sharing के लिए Web Share API
-            if (navigator.share && navigator.canShare({ files: [file] })) {
-              setTimeout(async () => {
-                try {
-                  await navigator.share({
-                    files: [file]
-                  });
-                } catch (e) {
-                  // WhatsApp app खोलते हैं
-                  window.location.href = 'whatsapp://send';
-                }
-              }, 500);
-            } else {
-              // Fallback
-              setTimeout(() => {
-                window.location.href = 'whatsapp://send';
-              }, 100);
-            }
-          } catch (error) {
-            window.location.href = 'whatsapp://send';
-          }
+            canvas.toBlob(function(blob) {
+              const file = new File([blob], `${tileName}.jpg`, { type: 'image/jpeg' });
+              
+              if (navigator.share) {
+                navigator.share({
+                  files: [file]
+                });
+              } else {
+                // WhatsApp direct intent
+                window.open(`whatsapp://send`, '_blank');
+              }
+            }, 'image/jpeg', 0.9);
+          };
+          
+          img.crossOrigin = 'anonymous';
+          img.src = imageUrl;
+          
+        } else {
+          // Desktop पर file download करके manual share
+          const link = document.createElement('a');
+          link.href = URL.createObjectURL(blob);
+          link.download = `${tileName}.jpg`;
+          link.click();
+          
+          // WhatsApp web खोलना
+          setTimeout(() => {
+            window.open('https://web.whatsapp.com/', '_blank');
+          }, 500);
         }
-        
       } catch (error) {
-        console.error('Error:', error);
-        // Simple fallback - WhatsApp खोलते हैं
-        window.location.href = 'whatsapp://';
+        console.error('Error sharing:', error);
+        // Simple fallback - download image
+        window.open(imageUrl, '_blank');
       }
     }
 
