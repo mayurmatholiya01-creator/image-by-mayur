@@ -5,7 +5,63 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Tile Search</title>
   <style>
-    /* आपके पहले के styles यहाँ लगाएं */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0f1f1f;
+      color: #fff;
+      padding: 20px;
+    }
+    .container { max-width: 800px; margin: 0 auto; }
+    .main-card {
+      background: linear-gradient(135deg, #1a3333 0%, #0d2626 100%);
+      border-radius: 16px;
+      padding: 32px;
+      border: 1px solid #2d4a4a;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+      position: relative;
+    }
+    .main-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, #10b981, #059669, #047857);
+    }
+    .filter-section, .search-section { margin-bottom: 24px; }
+    .filter-label {
+      color: #d1d5db; font-size: 14px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.5px;
+      display: block; margin-bottom: 8px;
+    }
+    .filter-dropdown, .search-input {
+      width: 100%; padding: 16px 20px;
+      background: #1a3333; border: 1px solid #2d4a4a;
+      border-radius: 12px; color: #fff; font-size: 16px;
+      outline: none; transition: all 0.3s ease;
+    }
+    .filter-dropdown {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+      background-repeat: no-repeat; background-position: right 16px center; background-size: 16px;
+      padding-right: 50px;
+    }
+    .filter-dropdown:focus, .search-input:focus { border-color: #10b981; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1); }
+    .results-container {
+      background: #1a3333; border: 1px solid #2d4a4a;
+      border-radius: 12px; padding: 24px; color: #6b7280;
+    }
+    .tile {
+      background: #152a2a; border: 1px solid #2d4a4a;
+      border-radius: 12px; padding: 16px; margin-bottom: 16px;
+    }
+    .tile strong { color: #fff; }
+    .tile a { color: #10b981; text-decoration: none; }
+    @media (max-width: 768px) {
+      body { padding: 16px; }
+      .main-card { padding: 24px; }
+    }
+    @media (max-width: 480px) {
+      .main-card { padding: 20px; }
+    }
   </style>
 </head>
 <body>
@@ -13,106 +69,79 @@
     <div class="main-card">
       <div class="filter-section">
         <label class="filter-label">Filter by Size</label>
-        <select class="filter-dropdown" id="sizeFilter">
+        <select id="sizeFilter" class="filter-dropdown">
           <option value="">All Sizes</option>
         </select>
       </div>
       <div class="search-section">
-        <input
-          type="text"
-          class="search-input"
-          id="searchInput"
-          placeholder="Search tiles by name or design..."
-        />
+        <input id="searchInput" class="search-input" type="text"
+               placeholder="Search tiles by design name..." />
       </div>
-      <div class="results-container" id="resultsContainer">
+      <div id="resultsContainer" class="results-container">
         <div class="results-placeholder">Your tile results will appear here</div>
-        <div class="results-subtitle">Search or filter to see tiles</div>
       </div>
     </div>
   </div>
 
   <script>
-    const searchInput = document.getElementById("searchInput");
-    const sizeFilter = document.getElementById("sizeFilter");
-    const resultsContainer = document.getElementById("resultsContainer");
-
+    const sizeFilter = document.getElementById('sizeFilter');
+    const searchInput = document.getElementById('searchInput');
+    const resultsContainer = document.getElementById('resultsContainer');
     let tilesData = [];
 
-    // Populate dropdown sizes after loading
     function populateSizeFilter() {
-      const sizes = [...new Set(tilesData.map((t) => t.dimensions))].sort();
-      sizes.forEach((size) => {
-        const option = document.createElement("option");
-        option.value = size;
-        option.textContent = size;
-        sizeFilter.appendChild(option);
+      const sizes = [...new Set(tilesData.map(t => t.dimensions))].sort();
+      sizes.forEach(size => {
+        const opt = document.createElement('option');
+        opt.value = size; opt.textContent = size;
+        sizeFilter.appendChild(opt);
       });
     }
 
-    function displayResults(tiles) {
-      if (tiles.length === 0) {
-        resultsContainer.innerHTML = `<div class="results-placeholder">No tiles found</div>`;
+    function displayTiles(tiles) {
+      if (!tiles.length) {
+        resultsContainer.innerHTML = '<div class="results-placeholder">No tiles found</div>';
         return;
       }
-      resultsContainer.innerHTML = tiles
-        .map(
-          (tile) => `
-            <div>
-              <strong>${tile.design_name}</strong> (${tile.dimensions})<br>
-              <a href="${tile.url}" target="_blank">Download</a>
-            </div>
-          `
-        )
-        .join("");
+      resultsContainer.innerHTML = tiles.map(tile =>
+        `<div class="tile">
+           <strong>${tile.design_name}</strong> (${tile.dimensions})<br>
+           <a href="${tile.url}" target="_blank">Download</a>
+         </div>`
+      ).join('');
     }
 
-    // Filter function
     function applyFilters() {
-      const searchTerm = searchInput.value.toLowerCase().trim();
-      const sizeTerm = sizeFilter.value;
-
+      const term = searchInput.value.toLowerCase().trim();
+      const size = sizeFilter.value;
       let filtered = tilesData;
-
-      if (searchTerm) {
-        filtered = filtered.filter((tile) =>
-          tile.design_name.toLowerCase().includes(searchTerm)
-        );
-      }
-      if (sizeTerm !== "") {
-        filtered = filtered.filter((tile) => tile.dimensions === sizeTerm);
-      }
-
-      displayResults(filtered);
+      if (term) filtered = filtered.filter(t =>
+        t.design_name.toLowerCase().includes(term)
+      );
+      if (size) filtered = filtered.filter(t => t.dimensions === size);
+      displayTiles(filtered);
     }
 
-    // Event listeners
-    searchInput.addEventListener("input", applyFilters);
-    sizeFilter.addEventListener("change", applyFilters);
+    searchInput.addEventListener('input', applyFilters);
+    sizeFilter.addEventListener('change', applyFilters);
 
-    // Load your published Google Sheets JSON (replace this URL with your actual published JSON URL)
     async function loadData() {
       const sheetJsonURL =
-        "https://spreadsheets.google.com/feeds/list/2PACX-1vSc872n1tknGRW9EHfZmNZBKtXEsYXwZ72GOHamXVrzu6mIAi0rqrLdB0BnLFppa4h-T03tHr7Vir9b/od6/public/values?alt=json";
-
+        'https://docs.google.com/spreadsheets/d/1oHpJw-_zLdf_jt2SL5l7Hpiu8nSK9gvXfLEVvLlz5cM/export?format=csv&gid=622851011';
       try {
-        const response = await fetch(sheetJsonURL);
-        const data = await response.json();
-
-        tilesData = data.feed.entry.map((item) => ({
-          filename: item.gsx$filename.$t,
-          dimensions: item.gsx$dimensions.$t,
-          design_name: item.gsx$design_name.$t,
-          url: item.gsx$url.$t,
-          uploaded_at: item.gsx$uploaded_at.$t,
-        }));
-
+        const res = await fetch(sheetJsonURL);
+        const csv = await res.text();
+        const [header, ...rows] = csv.trim().split('\n');
+        rows.forEach(line => {
+          const [filename, dimensions, design_name, url, uploaded_at] = line.split(',');
+          tilesData.push({ filename, dimensions, design_name, url, uploaded_at });
+        });
         populateSizeFilter();
         applyFilters();
-      } catch (err) {
-        console.error("Error loading data:", err);
+      } catch (e) {
+        console.error('Failed to load data', e);
         resultsContainer.innerHTML =
-          "<div class='results-placeholder'>Failed to load data.</div>";
+          '<div class="results-placeholder">Failed to load data.</div>';
       }
     }
 
