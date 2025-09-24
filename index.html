@@ -102,75 +102,87 @@
       display:flex; gap:6px; flex-shrink:0; margin-left:12px;
     }
     
-    /* Neumorphism 3D Buttons - base */
+    /* Neumorphism 3D Buttons */
     .action-btn {
-      width:36px; height:36px; border:none; border-radius:12px; 
+      width:32px; height:32px; border:none; border-radius:12px; 
       cursor:pointer; display:flex; align-items:center; justify-content:center;
-      position:relative; transition:transform 0.14s cubic-bezier(.2,.8,.2,1), box-shadow 0.14s;
-      /* dark square background like image */
-      background:linear-gradient(180deg,#0b0f13,#111417);
-      /* subtle outline as requested */
-      outline:1px solid rgba(255,255,255,0.03);
-      outline-offset:0;
-      /* 3D-ish shadows to emulate neumorphism */
-      box-shadow:6px 6px 14px rgba(0,0,0,0.6), -6px -6px 12px rgba(255,255,255,0.03);
-      -webkit-tap-highlight-color: transparent;
+      position:relative; transition:all 0.15s cubic-bezier(0.4,0,0.2,1);
+      background-color: #21262d; /* Base color for neumorphism effect */
+      box-shadow: 4px 4px 8px rgba(0,0,0,0.5), -4px -4px 8px rgba(255,255,255,0.05);
+      color: white; /* For SVG icon color */
     }
-    .action-btn::before{
-      /* soft glossy highlight */
-      content:''; position:absolute; inset:1px; border-radius:10px; opacity:0.06;
-      background:linear-gradient(135deg,rgba(255,255,255,0.06),transparent 40%, rgba(0,0,0,0.18));
-      pointer-events:none;
+    .action-btn:active {
+      transform:scale(0.95);
+      box-shadow:inset 3px 3px 6px rgba(0,0,0,0.6), inset -3px -3px 6px rgba(255,255,255,0.04);
+    }
+    .action-btn::before {
+      content:''; position:absolute; top:1px; left:1px; right:1px; bottom:1px;
+      border-radius:10px; opacity:0.1;
+      background:linear-gradient(135deg,rgba(255,255,255,0.1),transparent 50%,rgba(0,0,0,0.2));
+    }
+    /* Specific styles for download and whatsapp icons - now using SVG for better quality */
+    .download-btn svg, .whatsapp-btn svg {
+      width: 18px; /* Adjust size as needed */
+      height: 18px;
+      stroke: currentColor; /* Use button's color for SVG stroke */
+      stroke-width: 1.5;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .download-btn svg path:last-child {
+        fill: currentColor; /* Fill the bottom line of download icon */
+        stroke: none;
+    }
+    .whatsapp-btn svg path:first-child {
+        fill: #25D366; /* Fill for WhatsApp logo */
+        stroke: none;
+    }
+    .whatsapp-btn svg path:last-child {
+        fill: white; /* Fill for inner chat bubble */
+        stroke: none;
     }
 
-    /* Click/press animation class (also used by JS to animate on click) */
-    .action-btn.btn-press {
-      transform:scale(0.92);
-      box-shadow:inset 4px 4px 8px rgba(0,0,0,0.6), inset -4px -4px 8px rgba(255,255,255,0.02);
-    }
 
-    /* Keep :active small fallback */
-    .action-btn:active { transform:scale(0.95); }
-
-    /* Download icon (white svg centered) */
-    .download-btn {
-      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath fill='white' d='M12 16l-5-5h3V4h4v7h3l-5 5z'/%3e%3cpath fill='white' d='M5 20h14v2H5v-2z'/%3e%3c/svg%3e");
-      background-repeat:no-repeat; background-position:center; background-size:18px;
-    }
-    .download-btn:hover { transform:translateY(-2px) scale(1.02); }
-
-    /* WhatsApp icon (white svg centered) */
-    .whatsapp-btn {
-      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath fill='white' d='M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488'/%3e%3c/svg%3e");
-      background-repeat:no-repeat; background-position:center; background-size:16px;
-    }
-    .whatsapp-btn:hover { transform:translateY(-2px) scale(1.02); }
-
-    /* Modal 3D Buttons (use same visual style but larger) */
+    /* Modal 3D Buttons */
     .modal-action-btn {
       width:36px; height:36px; border:none; border-radius:12px;
       cursor:pointer; display:flex; align-items:center; justify-content:center;
-      position:relative; transition:transform 0.14s cubic-bezier(.2,.8,.2,1), box-shadow 0.14s;
-      background:linear-gradient(180deg,#0b0f13,#111417);
-      outline:1px solid rgba(255,255,255,0.03);
-      box-shadow:6px 6px 12px rgba(0,0,0,0.4), -6px -6px 12px rgba(255,255,255,0.05);
+      position:relative; transition:all 0.15s cubic-bezier(0.4,0,0.2,1);
+      background-color: #21262d; /* Base color for neumorphism effect */
+      box-shadow: 4px 4px 8px rgba(0,0,0,0.5), -4px -4px 8px rgba(255,255,255,0.05);
+      color: white; /* For SVG icon color */
     }
-    .modal-action-btn::before{
+    .modal-action-btn:active {
+      transform:scale(0.95);
+      box-shadow:inset 3px 3px 6px rgba(0,0,0,0.6), inset -3px -3px 6px rgba(255,255,255,0.04);
+    }
+    .modal-action-btn::before {
       content:''; position:absolute; top:1px; left:1px; right:1px; bottom:1px;
-      border-radius:10px; opacity:0.06;
-      background:linear-gradient(135deg,rgba(255,255,255,0.06),transparent 40%,rgba(0,0,0,0.18));
+      border-radius:10px; opacity:0.1;
+      background:linear-gradient(135deg,rgba(255,255,255,0.1),transparent 50%,rgba(0,0,0,0.2));
     }
-    .modal-action-btn.btn-press { transform:scale(0.92); box-shadow:inset 4px 4px 8px rgba(0,0,0,0.5), inset -4px -4px 8px rgba(255,255,255,0.03); }
-
-    .modal-download-btn {
-      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath fill='white' d='M12 16l-5-5h3V4h4v7h3l-5 5z'/%3e%3cpath fill='white' d='M5 20h14v2H5v-2z'/%3e%3c/svg%3e");
-      background-repeat:no-repeat; background-position:center; background-size:18px;
+    .modal-download-btn svg, .modal-whatsapp-btn svg {
+      width: 20px; /* Adjust size as needed */
+      height: 20px;
+      stroke: currentColor;
+      stroke-width: 1.5;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
     }
-    .modal-whatsapp-btn {
-      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath fill='white' d='M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488'/%3e%3c/svg%3e");
-      background-repeat:no-repeat; background-position:center; background-size:16px;
+    .modal-download-btn svg path:last-child {
+        fill: currentColor;
+        stroke: none;
     }
-    .modal-download-btn:hover, .modal-whatsapp-btn:hover { transform:translateY(-2px) scale(1.02); }
+    .modal-whatsapp-btn svg path:first-child {
+        fill: #25D366;
+        stroke: none;
+    }
+    .modal-whatsapp-btn svg path:last-child {
+        fill: white;
+        stroke: none;
+    }
 
     .load-more {
       display:block; margin:0 auto; padding:16px 32px;
@@ -278,15 +290,23 @@
     </div>
   </div>
 
-  <!-- Fixed Modal -->
   <div id="modalOverlay" class="modal-overlay">
     <div class="modal-content">
       <div class="modal-header">
         <div class="modal-caption" id="modalCaption"></div>
         <div class="modal-controls">
-          <!-- modal-action-btn uses same visual language as tile buttons -->
-          <button class="modal-action-btn modal-download-btn" id="modalDownload" title="Download"></button>
-          <button class="modal-action-btn modal-whatsapp-btn" id="modalWhatsapp" title="Share on WhatsApp"></button>
+          <button class="modal-action-btn modal-download-btn" id="modalDownload" title="Download">
+            <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'>
+              <path d='M12 17V3'/>
+              <path d='m8 13 4 4 4-4'/>
+              <path d='M5 20h14'/>
+            </svg>
+          </button>
+          <button class="modal-action-btn modal-whatsapp-btn" id="modalWhatsapp" title="Share on WhatsApp">
+            <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'>
+                <path d='M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488'/>
+            </svg>
+          </button>
           <button class="close-btn" onclick="closeModal()">✕</button>
         </div>
       </div>
@@ -329,7 +349,7 @@
 
     function getFullImageUrl(driveUrl) {
       const id = driveUrl?.match(/[-\w]{25,}/)?.[0];
-      return id ? `https://lh3.googleusercontent.com/d/${id}=w1200` : '';
+      return id ? `https://lh3.googleusercontent.com/d/$${id}=w1200` : '';
     }
 
     // Fuzzy Search with Size Filter
@@ -387,7 +407,7 @@
       }
       
       container.innerHTML = suggestions
-        .map(name => `<div class="suggestion-item" onclick="selectSuggestion('${name.replace(/'/g, "\\'")}')">${name}</div>`)
+        .map(name => `<div class="suggestion-item" onclick="selectSuggestion('${name}')">${name}</div>`)
         .join('');
       container.style.display = 'block';
     }
@@ -414,14 +434,8 @@
         const downloadUrl = getDownloadUrl(tile.url);
         const fullUrl = getFullImageUrl(tile.url);
         
-        // escape single quotes in names/urls for insertion into onclick attributes
-        const safeName = (tile.design_name || '').replace(/'/g, "\\'");
-        const safeSize = (tile.dimensions || '').replace(/'/g, "\\'");
-        const safeFull = (fullUrl || '').replace(/'/g, "\\'");
-        const safeDownload = (downloadUrl || '').replace(/'/g, "\\'");
-
         return `
-          <div class="tile-card" onclick="openModal('${safeName}', '${safeSize}', '${safeFull}', '${safeDownload}')">
+          <div class="tile-card" onclick="openModal('${tile.design_name}', '${tile.dimensions}', '${fullUrl}', '${downloadUrl}')">
             <div class="tile-image">
               ${imageUrl ? `<img src="${imageUrl}" alt="${tile.design_name}" loading="lazy" />` : 
                 '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#8b949e">No Image</div>'}
@@ -432,10 +446,20 @@
                 <p>${tile.dimensions}</p>
               </div>
               <div class="tile-actions">
-                <button class="action-btn download-btn" onclick="event.stopPropagation(); animateBtn(this); window.open('${safeDownload}','_blank')" 
-                        title="Download"></button>
-                <button class="action-btn whatsapp-btn" onclick="event.stopPropagation(); animateBtn(this); shareToWhatsApp('${safeName}','${safeFull}')" 
-                        title="Share on WhatsApp"></button>
+                <button class="action-btn download-btn" onclick="event.stopPropagation();window.open('${downloadUrl}','_blank')" 
+                        title="Download">
+                  <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'>
+                    <path d='M12 17V3'/>
+                    <path d='m8 13 4 4 4-4'/>
+                    <path d='M5 20h14'/>
+                  </svg>
+                </button>
+                <button class="action-btn whatsapp-btn" onclick="event.stopPropagation();shareToWhatsApp('${tile.design_name}','${fullUrl}')" 
+                        title="Share on WhatsApp">
+                  <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'>
+                      <path d='M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488'/>
+                  </svg>
+                </button>
               </div>
             </div>
           </div>`;
@@ -443,9 +467,6 @@
 
       app.elements.loadMoreBtn.style.display = 
         app.displayedCount < app.filteredData.length ? 'block' : 'none';
-
-      // attach click-press animation handler to any new buttons (safety)
-      attachBtnAnimationHandlers();
     }
 
     function applyFilters() {
@@ -472,14 +493,11 @@
       app.elements.modalCaption.textContent = `${title} - ${size}`;
       app.elements.modalImage.src = imageUrl;
       
-      app.elements.modalDownload.onclick = () => { animateBtn(app.elements.modalDownload); window.open(downloadUrl, '_blank'); };
-      app.elements.modalWhatsapp.onclick = () => { animateBtn(app.elements.modalWhatsapp); shareToWhatsApp(title, imageUrl); };
+      app.elements.modalDownload.onclick = () => window.open(downloadUrl, '_blank');
+      app.elements.modalWhatsapp.onclick = () => shareToWhatsApp(title, imageUrl);
       
       app.elements.modal.style.display = 'flex';
       document.body.classList.add('modal-open');
-
-      // make sure modal buttons animate on click via handlers
-      attachBtnAnimationHandlers();
     }
 
     function closeModal() {
@@ -490,15 +508,13 @@
     // Share Function
     async function shareToWhatsApp(name, url) {
       try {
-        // attempt to fetch image as blob & share with Web Share API if supported
         const response = await fetch(url);
         const blob = await response.blob();
         const file = new File([blob], `${name}.jpg`, { type: 'image/jpeg' });
         
-        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        if (navigator.share && navigator.canShare({ files: [file] })) {
           await navigator.share({ files: [file] });
         } else {
-          // fallback: open whatsapp web with url text
           window.open(`https://wa.me/?text=${encodeURIComponent(url)}`, '_blank');
         }
       } catch (error) {
@@ -551,8 +567,6 @@
         app.data = text.trim().split('\n').slice(1)
           .filter(line => line.trim())
           .map(line => {
-            // handle CSV columns that may contain commas inside quotes (basic handling)
-            // split on comma, but this is simple approach; for complex CSV use a parser.
             const cols = line.split(',');
             return {
               filename: cols[0] || '',
@@ -574,34 +588,6 @@
     }
 
     loadData();
-
-    /* =========================
-       BUTTON PRESS ANIMATION HELPERS
-       - Adds a short "press" animation when any action button is clicked.
-       - This satisfies "button should animate on clicking" and provides visual feedback.
-       ========================= */
-    function animateBtn(btn){
-      if(!btn) return;
-      btn.classList.add('btn-press');
-      // remove after short time (matches CSS transition)
-      setTimeout(()=> btn.classList.remove('btn-press'), 180);
-    }
-
-    function attachBtnAnimationHandlers(){
-      // Attach to any .action-btn or .modal-action-btn that doesn't already have a handler
-      document.querySelectorAll('.action-btn, .modal-action-btn').forEach(btn=>{
-        if (!btn.dataset.hasClickAnim) {
-          btn.addEventListener('click', (e)=>{
-            // stopPropagation is handled where needed in code; here we only animate
-            animateBtn(btn);
-          });
-          btn.dataset.hasClickAnim = '1';
-        }
-      });
-    }
-
-    // Attach initially (in case there are static buttons)
-    attachBtnAnimationHandlers();
   </script>
 </body>
 </html>
