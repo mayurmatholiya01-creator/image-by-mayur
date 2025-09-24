@@ -184,40 +184,58 @@
 
     async function shareImageToWhatsApp(tileName, imageUrl) {
       try {
-        // Image को fetch करके blob बनाते हैं
+        // Image को download करके local blob बनाते हैं
         const response = await fetch(imageUrl);
         const blob = await response.blob();
         
-        // File object बनाते हैं
+        // File object बनाते हैं बिना कोई text के
         const file = new File([blob], `${tileName}.jpg`, { type: 'image/jpeg' });
         
-        // Web Share API check करते हैं
-        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-          await navigator.share({
-            title: tileName,
-            text: `Check out this tile: ${tileName}`,
-            files: [file]
-          });
-        } else {
-          // Fallback: WhatsApp web/app में image URL के साथ
-          const message = `Check out this tile: ${tileName}`;
+        // Direct WhatsApp के लिए different approach
+        if (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+          // Mobile पर direct WhatsApp intent
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          const img = new Image();
           
-          if (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-            // Mobile पर WhatsApp app
-            window.open(`whatsapp://send?text=${encodeURIComponent(message)}&media=${encodeURIComponent(imageUrl)}`, '_blank');
-            setTimeout(() => {
-              window.open(`https://wa.me/?text=${encodeURIComponent(message + '\n' + imageUrl)}`, '_blank');
-            }, 1000);
-          } else {
-            // Desktop पर web WhatsApp
-            window.open(`https://wa.me/?text=${encodeURIComponent(message + '\n' + imageUrl)}`, '_blank');
-          }
+          img.onload = function() {
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
+            
+            canvas.toBlob(function(blob) {
+              const file = new File([blob], `${tileName}.jpg`, { type: 'image/jpeg' });
+              
+              if (navigator.share) {
+                navigator.share({
+                  files: [file]
+                });
+              } else {
+                // WhatsApp direct intent
+                window.open(`whatsapp://send`, '_blank');
+              }
+            }, 'image/jpeg', 0.9);
+          };
+          
+          img.crossOrigin = 'anonymous';
+          img.src = imageUrl;
+          
+        } else {
+          // Desktop पर file download करके manual share
+          const link = document.createElement('a');
+          link.href = URL.createObjectURL(blob);
+          link.download = `${tileName}.jpg`;
+          link.click();
+          
+          // WhatsApp web खोलना
+          setTimeout(() => {
+            window.open('https://web.whatsapp.com/', '_blank');
+          }, 500);
         }
       } catch (error) {
-        console.error('Error sharing image:', error);
-        // Error की स्थिति में fallback
-        const message = `Check out this tile: ${tileName}`;
-        window.open(`https://wa.me/?text=${encodeURIComponent(message + '\n' + imageUrl)}`, '_blank');
+        console.error('Error sharing:', error);
+        // Simple fallback - download image
+        window.open(imageUrl, '_blank');
       }
     }
 
