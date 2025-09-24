@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tile Search</title>
+  <style>
+    /* आपके पहले के styles यहाँ लगाएं */
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="main-card">
+      <div class="filter-section">
+        <label class="filter-label">Filter by Size</label>
+        <select class="filter-dropdown" id="sizeFilter">
+          <option value="">All Sizes</option>
+        </select>
+      </div>
+      <div class="search-section">
+        <input
+          type="text"
+          class="search-input"
+          id="searchInput"
+          placeholder="Search tiles by name or design..."
+        />
+      </div>
+      <div class="results-container" id="resultsContainer">
+        <div class="results-placeholder">Your tile results will appear here</div>
+        <div class="results-subtitle">Search or filter to see tiles</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const searchInput = document.getElementById("searchInput");
+    const sizeFilter = document.getElementById("sizeFilter");
+    const resultsContainer = document.getElementById("resultsContainer");
+
+    let tilesData = [];
+
+    // Populate dropdown sizes after loading
+    function populateSizeFilter() {
+      const sizes = [...new Set(tilesData.map((t) => t.dimensions))].sort();
+      sizes.forEach((size) => {
+        const option = document.createElement("option");
+        option.value = size;
+        option.textContent = size;
+        sizeFilter.appendChild(option);
+      });
+    }
+
+    function displayResults(tiles) {
+      if (tiles.length === 0) {
+        resultsContainer.innerHTML = `<div class="results-placeholder">No tiles found</div>`;
+        return;
+      }
+      resultsContainer.innerHTML = tiles
+        .map(
+          (tile) => `
+            <div>
+              <strong>${tile.design_name}</strong> (${tile.dimensions})<br>
+              <a href="${tile.url}" target="_blank">Download</a>
+            </div>
+          `
+        )
+        .join("");
+    }
+
+    // Filter function
+    function applyFilters() {
+      const searchTerm = searchInput.value.toLowerCase().trim();
+      const sizeTerm = sizeFilter.value;
+
+      let filtered = tilesData;
+
+      if (searchTerm) {
+        filtered = filtered.filter((tile) =>
+          tile.design_name.toLowerCase().includes(searchTerm)
+        );
+      }
+      if (sizeTerm !== "") {
+        filtered = filtered.filter((tile) => tile.dimensions === sizeTerm);
+      }
+
+      displayResults(filtered);
+    }
+
+    // Event listeners
+    searchInput.addEventListener("input", applyFilters);
+    sizeFilter.addEventListener("change", applyFilters);
+
+    // Load your published Google Sheets JSON (replace this URL with your actual published JSON URL)
+    async function loadData() {
+      const sheetJsonURL =
+        "https://spreadsheets.google.com/feeds/list/2PACX-1vSc872n1tknGRW9EHfZmNZBKtXEsYXwZ72GOHamXVrzu6mIAi0rqrLdB0BnLFppa4h-T03tHr7Vir9b/od6/public/values?alt=json";
+
+      try {
+        const response = await fetch(sheetJsonURL);
+        const data = await response.json();
+
+        tilesData = data.feed.entry.map((item) => ({
+          filename: item.gsx$filename.$t,
+          dimensions: item.gsx$dimensions.$t,
+          design_name: item.gsx$design_name.$t,
+          url: item.gsx$url.$t,
+          uploaded_at: item.gsx$uploaded_at.$t,
+        }));
+
+        populateSizeFilter();
+        applyFilters();
+      } catch (err) {
+        console.error("Error loading data:", err);
+        resultsContainer.innerHTML =
+          "<div class='results-placeholder'>Failed to load data.</div>";
+      }
+    }
+
+    loadData();
+  </script>
+</body>
+</html>
