@@ -168,10 +168,10 @@
               <small>${tile.dimensions}</small>
             </div>
             <div class="tile-buttons">
-              <button class="download-btn" onclick="downloadImage('${downloadUrl}', '${tile.design_name}.jpg')">
+              <button class="download-btn" onclick="window.open('${downloadUrl}', '_blank')">
                 Download
               </button>
-              <button class="whatsapp-btn" onclick="shareToWhatsApp('${directImageUrl}')">
+              <button class="whatsapp-btn" onclick="shareImageToWhatsApp('${tile.design_name}', '${directImageUrl}')">
                 ${whatsappIcon} WhatsApp
               </button>
             </div>
@@ -182,61 +182,42 @@
       isInitialLoad = false;
     }
 
-    // Direct WhatsApp sharing without text
-    function shareToWhatsApp(imageUrl) {
-      const userAgent = navigator.userAgent.toLowerCase();
-      const isAndroid = userAgent.includes('android');
-      const isIOS = userAgent.includes('iphone') || userAgent.includes('ipad');
-      
-      if (isAndroid) {
-        // Android - Direct WhatsApp app
-        window.location.href = `intent://send?type=image/*&stream=${encodeURIComponent(imageUrl)}#Intent;package=com.whatsapp;scheme=whatsapp;end`;
-        // Fallback
-        setTimeout(() => {
-          window.open(`whatsapp://send?media=${encodeURIComponent(imageUrl)}`, '_blank');
-        }, 500);
-      } else if (isIOS) {
-        // iOS - Direct WhatsApp app
-        window.location.href = `whatsapp://send?media=${encodeURIComponent(imageUrl)}`;
-        // Fallback
-        setTimeout(() => {
-          window.open(`https://wa.me/?media=${encodeURIComponent(imageUrl)}`, '_blank');
-        }, 500);
-      } else {
-        // Desktop - Web WhatsApp with image URL
-        window.open(`https://web.whatsapp.com/send?media=${encodeURIComponent(imageUrl)}`, '_blank');
-      }
-    }
-
-    // Enhanced download function for all platforms
-    async function downloadImage(url, filename) {
+    async function shareImageToWhatsApp(tileName, imageUrl) {
       try {
-        // Fetch the image
-        const response = await fetch(url);
+        // Image को fetch करके blob बनाते हैं
+        const response = await fetch(imageUrl);
         const blob = await response.blob();
         
-        // Create download link
-        const downloadLink = document.createElement('a');
-        const objectUrl = URL.createObjectURL(blob);
+        // File object बनाते हैं
+        const file = new File([blob], `${tileName}.jpg`, { type: 'image/jpeg' });
         
-        downloadLink.href = objectUrl;
-        downloadLink.download = filename;
-        downloadLink.style.display = 'none';
-        
-        // Trigger download
-        document.body.appendChild(downloadLink);
-        downloadLink.click();
-        document.body.removeChild(downloadLink);
-        
-        // Clean up
-        setTimeout(() => {
-          URL.revokeObjectURL(objectUrl);
-        }, 1000);
-        
+        // Web Share API check करते हैं
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            title: tileName,
+            text: `Check out this tile: ${tileName}`,
+            files: [file]
+          });
+        } else {
+          // Fallback: WhatsApp web/app में image URL के साथ
+          const message = `Check out this tile: ${tileName}`;
+          
+          if (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+            // Mobile पर WhatsApp app
+            window.open(`whatsapp://send?text=${encodeURIComponent(message)}&media=${encodeURIComponent(imageUrl)}`, '_blank');
+            setTimeout(() => {
+              window.open(`https://wa.me/?text=${encodeURIComponent(message + '\n' + imageUrl)}`, '_blank');
+            }, 1000);
+          } else {
+            // Desktop पर web WhatsApp
+            window.open(`https://wa.me/?text=${encodeURIComponent(message + '\n' + imageUrl)}`, '_blank');
+          }
+        }
       } catch (error) {
-        console.error('Download failed:', error);
-        // Fallback - open in new tab
-        window.open(url, '_blank');
+        console.error('Error sharing image:', error);
+        // Error की स्थिति में fallback
+        const message = `Check out this tile: ${tileName}`;
+        window.open(`https://wa.me/?text=${encodeURIComponent(message + '\n' + imageUrl)}`, '_blank');
       }
     }
 
