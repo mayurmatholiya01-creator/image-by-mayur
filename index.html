@@ -607,7 +607,7 @@
 
     async function loadData() {
       try {
-        const csvUrl = 'https://docs.google.com/spreadsheets/d/1oHpJw-_zLdf_jt2SL5l7Hpiu8nSK9gvXfLEVvLlz5cM/export?format=csv&gid=622851011';
+        const csvUrl = 'https://docs.google.com/spreadsheets/d/1oHpJw-_zLdf_jt2SL5l7Hpiu8nSK9gvXfLEVvLlz5cM/export?format=csv&gid=622851011&_=' + Date.now();
         const response = await fetch(csvUrl);
         const text = await response.text();
         
