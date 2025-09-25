@@ -4,12 +4,34 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Tile Search</title>
+  
+  <!-- PWA Meta Tags for Full Screen -->
+  <meta name="theme-color" content="#0d1117">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Tile Search">
+  <meta name="application-name" content="Tile Search">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="msapplication-TileColor" content="#0d1117">
+  <meta name="msapplication-navbutton-color" content="#0d1117">
+  
+  <!-- PWA Icons -->
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+  
   <style>
     * { margin:0; padding:0; box-sizing:border-box }
     body {
       font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',Roboto,sans-serif;
       background:#0d1117; color:#f0f6fc; padding:20px; min-height:100vh;
       line-height:1.6; 
+      /* PWA Safe Area Support */
+      padding-top: max(20px, env(safe-area-inset-top));
+      padding-bottom: max(20px, env(safe-area-inset-bottom));
+      padding-left: max(20px, env(safe-area-inset-left));
+      padding-right: max(20px, env(safe-area-inset-right));
     }
     
     body.modal-open .app-container { 
@@ -212,6 +234,35 @@
     }
     .empty-state h3 { font-size:1.5rem; margin-bottom:12px; color:#f0f6fc; }
 
+    /* PWA Install Prompt */
+    .install-prompt {
+      position:fixed; bottom:20px; left:20px; right:20px; z-index:1500;
+      background:#161b22; border:1px solid #30363d; border-radius:16px;
+      padding:16px; display:none; animation:slideUp 0.3s ease;
+    }
+    .install-prompt.show { display:flex; }
+    .install-prompt-content {
+      flex:1; margin-right:16px;
+    }
+    .install-prompt h3 {
+      font-size:0.9rem; color:#f0f6fc; margin-bottom:4px;
+    }
+    .install-prompt p {
+      font-size:0.8rem; color:#8b949e;
+    }
+    .install-btn {
+      background:#06d6a0; color:#0d1117; border:none; border-radius:8px;
+      padding:8px 16px; font-size:0.85rem; font-weight:600; cursor:pointer;
+    }
+    .install-dismiss {
+      background:transparent; color:#8b949e; border:none;
+      padding:8px; margin-left:8px; cursor:pointer;
+    }
+    @keyframes slideUp {
+      from { transform:translateY(100%); opacity:0; }
+      to { transform:translateY(0); opacity:1; }
+    }
+
     @media(max-width:768px){
       .controls { grid-template-columns:1fr; }
       .tiles-grid { grid-template-columns:1fr; }
@@ -220,6 +271,12 @@
       .app-container { padding:16px; }
       .action-btn { width:32px; height:32px; }
       .modal-action-btn { width:32px; height:32px; }
+      body { 
+        padding:16px; 
+        padding-top: max(16px, env(safe-area-inset-top)); 
+        padding-bottom: max(16px, env(safe-area-inset-bottom));
+      }
+      .install-prompt { left:16px; right:16px; bottom:16px; }
     }
   </style>
 </head>
@@ -250,6 +307,16 @@
       <h3>No tiles found</h3>
       <p>Try adjusting your search or filter criteria</p>
     </div>
+  </div>
+
+  <!-- PWA Install Prompt -->
+  <div class="install-prompt" id="installPrompt">
+    <div class="install-prompt-content">
+      <h3>Install Tile Search</h3>
+      <p>Add to home screen for full screen experience</p>
+    </div>
+    <button class="install-btn" id="installBtn">Install</button>
+    <button class="install-dismiss" id="installDismiss">✕</button>
   </div>
 
   <div id="modalOverlay" class="modal-overlay">
@@ -287,6 +354,42 @@
         modalWhatsapp: document.getElementById('modalWhatsapp')
       }
     };
+
+    // PWA Install Logic
+    let deferredPrompt;
+    const installPrompt = document.getElementById('installPrompt');
+    const installBtn = document.getElementById('installBtn');
+    const installDismiss = document.getElementById('installDismiss');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      
+      if (!localStorage.getItem('install-dismissed')) {
+        setTimeout(() => {
+          installPrompt.classList.add('show');
+        }, 3000);
+      }
+    });
+
+    installBtn.addEventListener('click', async () => {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        deferredPrompt = null;
+        installPrompt.classList.remove('show');
+      }
+    });
+
+    installDismiss.addEventListener('click', () => {
+      installPrompt.classList.remove('show');
+      localStorage.setItem('install-dismissed', 'true');
+    });
+
+    window.addEventListener('appinstalled', () => {
+      installPrompt.classList.remove('show');
+      console.log('PWA installed successfully');
+    });
 
     function getImageUrl(driveUrl) {
       const id = driveUrl?.match(/[-\w]{25,}/)?.[0];
@@ -492,6 +595,15 @@
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') closeModal();
     });
+
+    // Service Worker Registration
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('data:text/javascript;base64,c2VsZi5hZGRFdmVudExpc3RlbmVyKCdpbnN0YWxsJywgKGUpID0+IHsKICBjb25zb2xlLmxvZygnU1c6IEluc3RhbGxlZCcpOwp9KTsKCnNlbGYuYWRkRXZlbnRMaXN0ZW5lcignZmV0Y2gnLCAoZSkgPT4gewogIGUucmVzcG9uZFdpdGgoZmV0Y2goZS5yZXF1ZXN0KSk7Cn0pOw==')
+          .then(() => console.log('SW: Registered'))
+          .catch(() => console.log('SW: Registration failed'));
+      });
+    }
 
     async function loadData() {
       try {
